@@ -2,6 +2,7 @@ import {
   createBlip,
   Keybind,
   loadLocaleTexts,
+  locationName,
   notify,
   onServerEvent,
 } from "@aicore-fivem/lib/client";
@@ -27,14 +28,11 @@ function placeOf(c: { x: number; y: number; z: number }): {
   street: string | null;
   zone: string | null;
 } {
-  const [street = 0, crossing = 0] = GetStreetNameAtCoord(c.x, c.y, c.z);
-  const names = [street, crossing]
-    .map((hash) => (hash ? GetStreetNameFromHashKey(hash) : ""))
-    .filter(Boolean);
-  const zone = GetLabelText(GetNameOfZone(c.x, c.y, c.z));
+  const place = locationName(c);
+  const names = [place.street, place.crossing ?? ""].filter(Boolean);
   return {
     street: names.length ? names.join(" | ") : null,
-    zone: zone && zone !== "NULL" ? zone : null,
+    zone: place.zone || null,
   };
 }
 
