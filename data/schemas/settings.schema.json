@@ -30,6 +30,12 @@
       "minimum": 2,
       "maximum": 60
     },
+    "maxAlerts": {
+      "description": "Live alerts per officer: Most alerts an officer keeps on the map at once; a new one replaces the oldest.",
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 100
+    },
     "sound": {
       "description": "Sound: A sound plays when a card comes in.",
       "type": "boolean"
@@ -39,6 +45,7 @@
     "jobs",
     "alertSeconds",
     "cardSeconds",
+    "maxAlerts",
     "sound"
   ]
 }

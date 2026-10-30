@@ -4,4 +4,6 @@ import { startAlerts } from "./alerts";
 
 const world = new AdminWorld(["settings"]);
 
-startAlerts(() => readSettings(world.get("settings")));
+const settings = world.view("settings", readSettings);
+
+startAlerts(() => settings.value);

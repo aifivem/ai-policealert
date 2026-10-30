@@ -205,7 +205,7 @@ const CORE = {
 	clientPlayerLoadedEvent: "ai-core:client:playerLoaded",
 	clientPlayerUnloadedEvent: "ai-core:client:playerUnloaded",
 	clientCharacterPortraitEvent: "ai-core:client:characterPortrait",
-	clientCharacterLookEvent: "ai-core:client:characterLook",
+	characterLooksEvent: "ai-core:client:characterLooks",
 	clientPromptPressedEvent: "ai-core:client:promptPressed",
 	clientCacheEvent: "ai-core:client:cache",
 	clientHudVisibleEvent: "ai-core:client:hudVisible",
@@ -398,7 +398,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$13 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$14 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -412,7 +412,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$13.GetLookupValues(source);
+			list = core$14.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -615,7 +615,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$12 = resourceExport(CORE.resource), DEFAULT_KEY = "^[a-z0-9_]{2,32}$";
+const core$13 = resourceExport(CORE.resource), DEFAULT_KEY = "^[a-z0-9_]{2,32}$";
 function imported(spec, value) {
 	let base = clone(spec.newRecord ?? {}), out = {};
 	for (let name of Object.keys(spec.sections)) {
@@ -639,7 +639,7 @@ var AdminPanel = class {
 	constructor(schema) {
 		this.schema = schema;
 		for (let [name, spec] of Object.entries(schema.files)) this.load(name, spec);
-		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges)), setImmediate(() => core$12.RegisterAdminPanel(this.resource));
+		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges)), setImmediate(() => core$13.RegisterAdminPanel(this.resource));
 	}
 	get(file) {
 		return this.data.get(file) ?? {};
@@ -773,7 +773,7 @@ var AdminPanel = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data), this.views.changed(file, key, value);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$12.AdminPanelChanged({
+		if (core$13.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -796,7 +796,7 @@ var AdminPanel = class {
 };
 resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/online.ts
-const core$10 = resourceExport(CORE.resource);
+const core$11 = resourceExport(CORE.resource);
 var OnlinePlayers = class {
 	players = new Map();
 	onDuty = new Map();
@@ -805,7 +805,7 @@ var OnlinePlayers = class {
 		if (this.started) return;
 		this.started = !0;
 		let load = (source, character) => {
-			this.put(source, character, (core$10.GetJobs(source) ?? []).map((m) => m.job), (core$10.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$10.GetDutyJob(source));
+			this.put(source, character, (core$11.GetJobs(source) ?? []).map((m) => m.job), (core$11.GetGangs(source) ?? []).map((m) => m.gang)), this.setDuty(source, core$11.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => {
 			let player = this.players.get(source);
@@ -814,8 +814,8 @@ var OnlinePlayers = class {
 			let player = this.players.get(source);
 			player && (player.gangs = gangs.map((m) => m.gang));
 		}), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$10.GetLoadedSources()) {
-			let character = core$10.GetCharacter(source);
+		for (let source of core$11.GetLoadedSources()) {
+			let character = core$11.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -860,6 +860,23 @@ var OnlinePlayers = class {
 };
 const EMPTY = new Set(), online = new OnlinePlayers();
 resourceExport(CORE.resource), resourceExport(CORE.resource), createLogger(GetCurrentResourceName());
+const dropped = new Set();
+let listening = !1;
+function onDropped(fn) {
+	listening || (listening = !0, on("playerDropped", () => {
+		let source = Number(globalThis.source);
+		for (let handler of dropped) handler(source);
+	})), dropped.add(fn);
+}
+var PlayerMap = class extends Map {
+	constructor(options = {}) {
+		super(), onDropped((source) => {
+			if (!this.has(source)) return;
+			let value = this.get(source);
+			this.delete(source), options.onDrop?.(source, value);
+		});
+	}
+};
 // ../../../packages/lib/src/server/command.ts
 const resource = GetCurrentResourceName();
 createLogger(resource), new class {
@@ -887,7 +904,7 @@ createLogger(resource), new class {
 			if (name === resource) for (let command of this.list) for (let n of command.info.names) emitNet("chat:removeSuggestion", -1, `/${n}`);
 		});
 	}
-}(), createLogger(GetCurrentResourceName()), createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
+}(), createLogger(GetCurrentResourceName()), createLogger("aicore-lib"), IsDuplicityVersion(), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource), resourceExport(CORE.resource);
 // resource/common/alerts.ts
 const EVENTS = {
 	alerts: "ai-policealert:client:alerts",
@@ -899,7 +916,8 @@ function readSettings(raw) {
 		jobs: names(s.jobs).length ? names(s.jobs) : ["police"],
 		alertSeconds: int(s.alertSeconds, 60, 10, 600),
 		cardSeconds: int(s.cardSeconds, 8, 2, 60),
-		sound: bool(s.sound, !0)
+		sound: bool(s.sound, !0),
+		maxAlerts: int(s.maxAlerts, 30, 5, 100)
 	};
 }
 // resource/server/alerts.ts
@@ -911,7 +929,7 @@ const BLIP = {
 var AlertBoard = class {
 	settings;
 	live = new Map();
-	holders = new Set();
+	holders = new PlayerMap();
 	nextId = 0;
 	constructor(settings) {
 		this.settings = settings;
@@ -926,15 +944,23 @@ var AlertBoard = class {
 			created: now,
 			expires: now + duration
 		};
-		this.live.set(live.id, live);
+		this.live.set(live.id, live), this.live.size > 1e3 && this.live.delete(this.live.keys().next().value);
 		let wire = this.wire(live, now);
-		for (let job of this.jobsOf(live)) for (let officer of online.onDutyFor(job)) emitNet(EVENTS.alert, officer, wire), this.holders.add(officer);
+		for (let job of this.jobsOf(live)) for (let officer of online.onDutyFor(job)) emitNet(EVENTS.alert, officer, wire), this.holders.set(officer, !0);
 	}
 	dutyChanged(source, job) {
 		let now = Date.now();
 		this.prune(now);
-		let list = job ? [...this.live.values()].filter((l) => this.jobsOf(l).includes(job)).map((l) => this.wire(l, now)) : [];
-		(list.length || this.holders.has(source)) && (emitNet(EVENTS.alerts, source, list), list.length ? this.holders.add(source) : this.holders.delete(source));
+		let list = [];
+		if (job) {
+			let max = this.settings().maxAlerts, all = [...this.live.values()];
+			for (let i = all.length - 1; i >= 0 && list.length < max; i--) {
+				let live = all[i];
+				this.jobsOf(live).includes(job) && list.push(this.wire(live, now));
+			}
+			list.reverse();
+		}
+		(list.length || this.holders.has(source)) && (emitNet(EVENTS.alerts, source, list), list.length ? this.holders.set(source, !0) : this.holders.delete(source));
 	}
 	drop(source) {
 		this.holders.delete(source);
@@ -969,10 +995,10 @@ function startAlerts(board) {
 	registerExport("DispatchAlert", (raw) => {
 		let alert = toDispatchAlert(raw);
 		alert && board.add(alert);
-	}), on(CORE.dutyChangedEvent, (source, job) => board.dutyChanged(source, job)), on(CORE.playerUnloadedEvent, (source, _charId, reason) => reason === "switch" ? board.dutyChanged(source, null) : board.drop(source)), on("playerDropped", () => board.drop(Number(globalThis.source)));
+	}), on(CORE.dutyChangedEvent, (source, job) => board.dutyChanged(source, job)), on(CORE.playerUnloadedEvent, (source, _charId, reason) => reason === "switch" ? board.dutyChanged(source, null) : board.drop(source));
 }
 // resource/server/index.ts
-const panel = new AdminPanel({
+const settings = new AdminPanel({
 	title: "ADMIN_TITLE",
 	icon: "triangle-exclamation",
 	files: { settings: {
@@ -996,6 +1022,12 @@ const panel = new AdminPanel({
 				type: "number",
 				min: 2,
 				max: 60,
+				integer: !0
+			},
+			maxAlerts: {
+				type: "number",
+				min: 5,
+				max: 100,
 				integer: !0
 			},
 			sound: { type: "bool" }
@@ -1039,6 +1071,14 @@ const panel = new AdminPanel({
 					unit: "s"
 				},
 				{
+					widget: "number",
+					path: "maxAlerts",
+					label: "ADMIN_F_MAX_ALERTS",
+					hint: "ADMIN_H_MAX_ALERTS",
+					min: 5,
+					max: 100
+				},
+				{
 					widget: "switch",
 					path: "sound",
 					label: "ADMIN_F_SOUND",
@@ -1047,5 +1087,5 @@ const panel = new AdminPanel({
 			]
 		}]
 	}]
-}), content = { settings: readSettings(panel.get("settings")) };
-panel.onChange("settings", () => content.settings = readSettings(panel.get("settings"))), startAlerts(new AlertBoard(() => content.settings));
+}).view("settings", readSettings);
+startAlerts(new AlertBoard(() => settings.value));

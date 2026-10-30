@@ -18,6 +18,7 @@ export const alertSchema: PanelSchema = {
         },
         alertSeconds: { type: "number", min: 10, max: 600, integer: true },
         cardSeconds: { type: "number", min: 2, max: 60, integer: true },
+        maxAlerts: { type: "number", min: 5, max: 100, integer: true },
         sound: { type: "bool" },
       },
     },
@@ -60,6 +61,14 @@ export const alertSchema: PanelSchema = {
               min: 2,
               max: 60,
               unit: "s",
+            },
+            {
+              widget: "number",
+              path: "maxAlerts",
+              label: "ADMIN_F_MAX_ALERTS",
+              hint: "ADMIN_H_MAX_ALERTS",
+              min: 5,
+              max: 100,
             },
             {
               widget: "switch",

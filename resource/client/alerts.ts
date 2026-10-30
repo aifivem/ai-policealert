@@ -63,6 +63,12 @@ class AlertFeed {
   add(alert: PoliceAlert, fresh = true): void {
     if (alert.ttl <= 0) return;
     this.remove(alert.id);
+    // At most `maxAlerts` blips and timers: the oldest live alert makes room (Map order = arrival order).
+    while (this.shown.size >= this.settings().maxAlerts) {
+      const oldest = this.shown.keys().next().value;
+      if (oldest === undefined) break;
+      this.remove(oldest);
+    }
     const blip = alert.coords
       ? createBlip({
           coords: alert.coords,
@@ -153,10 +159,7 @@ export function startAlerts(settings: () => Settings): void {
     defaultKey: "J",
     onPressed: () => feed.waypoint(),
   });
-  const feed = new AlertFeed(
-    settings,
-    () => key.currentKey,
-  );
+  const feed = new AlertFeed(settings, () => key.currentKey);
   onServerEvent(
     EVENTS.alerts,
     {

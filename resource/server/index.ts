@@ -4,11 +4,7 @@ import { AlertBoard, startAlerts } from "./alerts";
 import { alertSchema } from "./schema";
 
 const panel = new AdminPanel(alertSchema);
-/** Panel content, parsed again after every change. */
-const content = { settings: readSettings(panel.get("settings")) };
-panel.onChange(
-  "settings",
-  () => (content.settings = readSettings(panel.get("settings"))),
-);
+/** Panel settings, kept current by the panel. */
+const settings = panel.view("settings", readSettings);
 
-startAlerts(new AlertBoard(() => content.settings));
+startAlerts(new AlertBoard(() => settings.value));

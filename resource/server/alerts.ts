@@ -1,9 +1,15 @@
-import { online, registerExport } from "@aicore-fivem/lib/server";
-import { CORE, toDispatchAlert, type DispatchAlert } from "@aicore-fivem/shared";
+import { online, PlayerMap, registerExport } from "@aicore-fivem/lib/server";
+import {
+  CORE,
+  toDispatchAlert,
+  type DispatchAlert,
+} from "@aicore-fivem/shared";
 import { EVENTS, type PoliceAlert } from "common/alerts";
 
 /** Default blip of an alert that names none: a red pulse. */
 const BLIP = { sprite: 161, color: 1, scale: 1.2 };
+/** Live alerts the board keeps at most over every job (the oldest goes first); officers get at most `maxAlerts`. */
+const BOARD_MAX = 1000;
 
 interface LiveAlert {
   alert: DispatchAlert;
@@ -20,15 +26,17 @@ interface LiveAlert {
  * their job's live alerts on going on duty, then each new alert as a delta. Expiry runs on the client clock.
  */
 export class AlertBoard {
+  /** Insertion order = id order: the first entry is the oldest. */
   private readonly live = new Map<number, LiveAlert>();
   /** Players whose client holds alerts: they get an (empty) snapshot when their duty changes. */
-  private readonly holders = new Set<number>();
+  private readonly holders = new PlayerMap<true>();
   private nextId = 0;
 
   constructor(
     private readonly settings: () => {
       jobs: string[];
       alertSeconds: number;
+      maxAlerts: number;
     },
   ) {}
 
@@ -44,27 +52,37 @@ export class AlertBoard {
       expires: now + duration,
     };
     this.live.set(live.id, live);
+    if (this.live.size > BOARD_MAX)
+      this.live.delete(this.live.keys().next().value as number);
     const wire = this.wire(live, now);
     // Only the on-duty sets of the alert's jobs (one duty job per player, so nobody gets it twice).
     for (const job of this.jobsOf(live))
       for (const officer of online.onDutyFor(job)) {
         emitNet(EVENTS.alert, officer, wire);
-        this.holders.add(officer);
+        this.holders.set(officer, true);
       }
   }
 
-  /** Sends a player the live alerts of their (new) duty job; clears their cards when they hold some and have none now. */
+  /**
+   * Sends a player the newest `maxAlerts` live alerts of their (new) duty job; clears their cards when they hold some
+   * and have none now.
+   */
   dutyChanged(source: number, job: string | null): void {
     const now = Date.now();
     this.prune(now);
-    const list = job
-      ? [...this.live.values()]
-          .filter((l) => this.jobsOf(l).includes(job))
-          .map((l) => this.wire(l, now))
-      : [];
+    const list: PoliceAlert[] = [];
+    if (job) {
+      const max = this.settings().maxAlerts;
+      const all = [...this.live.values()];
+      for (let i = all.length - 1; i >= 0 && list.length < max; i--) {
+        const live = all[i] as LiveAlert;
+        if (this.jobsOf(live).includes(job)) list.push(this.wire(live, now));
+      }
+      list.reverse();
+    }
     if (!list.length && !this.holders.has(source)) return;
     emitNet(EVENTS.alerts, source, list);
-    if (list.length) this.holders.add(source);
+    if (list.length) this.holders.set(source, true);
     else this.holders.delete(source);
   }
 
@@ -76,6 +94,7 @@ export class AlertBoard {
     return live.jobs ?? this.settings().jobs;
   }
 
+  /** Alerts carry their own durations, so an expired one can sit behind a live one: every entry is checked. */
   private prune(now: number): void {
     for (const [id, live] of this.live)
       if (live.expires <= now) this.live.delete(id);
@@ -118,5 +137,4 @@ export function startAlerts(board: AlertBoard): void {
         ? board.dutyChanged(source, null)
         : board.drop(source),
   );
-  on("playerDropped", () => board.drop(Number(globalThis.source)));
 }

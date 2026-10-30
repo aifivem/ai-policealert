@@ -15,6 +15,8 @@
   "ADMIN_H_ALERT_SECONDS": "How long an alert's blip and waypoint key stay, unless the alert names its own time.",
   "ADMIN_F_CARD_SECONDS": "Card time",
   "ADMIN_H_CARD_SECONDS": "How long the alert card stays on screen.",
+  "ADMIN_F_MAX_ALERTS": "Live alerts per officer",
+  "ADMIN_H_MAX_ALERTS": "Most alerts an officer keeps on the map at once; a new one replaces the oldest.",
   "ADMIN_F_SOUND": "Sound",
   "ADMIN_H_SOUND": "A sound plays when a card comes in."
 }
