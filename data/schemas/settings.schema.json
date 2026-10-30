@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ai-policealert/data/settings.json",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This file's JSON Schema (for editors)."
+    },
+    "jobs": {
+      "description": "Alert jobs: On-duty members of these jobs get alerts that name no jobs of their own.",
+      "type": "array",
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 32,
+        "pattern": "^[a-z0-9_]{2,32}$"
+      }
+    },
+    "alertSeconds": {
+      "description": "Alert time: How long an alert's blip and waypoint key stay, unless the alert names its own time.",
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 600
+    },
+    "cardSeconds": {
+      "description": "Card time: How long the alert card stays on screen.",
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 60
+    },
+    "sound": {
+      "description": "Sound: A sound plays when a card comes in.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "jobs",
+    "alertSeconds",
+    "cardSeconds",
+    "sound"
+  ]
+}

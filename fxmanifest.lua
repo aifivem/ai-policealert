@@ -1,0 +1,28 @@
+name 'ai-policealert'
+author 'TGIANN'
+version '0.1.0'
+license 'GPL-3.0-only'
+description 'Police alert cards: on-duty officers get each alert as a card with a blip and a waypoint key'
+repository 'https://github.com/TGIANN/ai-policealert'
+fx_version 'cerulean'
+game 'gta5'
+node_version '22'
+
+client_script 'dist/client.js'
+server_script 'dist/server.js'
+ui_page 'dist/web/index.html'
+
+dependencies {
+	'/onesync',
+	'ai-core',
+}
+
+files {
+	'locales/*.json',
+	'dist/web/assets/*.js',
+	'dist/web/assets/*.css',
+	'dist/web/assets/*.woff',
+	'dist/web/assets/*.woff2',
+	'dist/web/*.html',
+	'data/settings.json',
+}

@@ -1,0 +1,20 @@
+{
+  "KEYBIND_WAYPOINT": "Set a waypoint to the last police alert",
+  "ALERT_WAYPOINT_SET": "Waypoint set to the alert",
+  "UI_ALERT_WAYPOINT": "Set waypoint",
+  "UI_ALERT_UNKNOWN": "Unknown place",
+  "ADMIN_TITLE": "Police alerts",
+  "ADMIN_TAB_SETTINGS": "Alerts",
+  "ADMIN_TAB_SETTINGS_DESC": "Who gets alert cards and how long they stay.",
+  "ADMIN_C_ALERTS": "Alert cards",
+  "ADMIN_C_ALERTS_DESC": "Used while this is the alert script ai-core sends police alerts to (ai-core panel, Police alerts).",
+  "ADMIN_F_JOBS": "Alert jobs",
+  "ADMIN_H_JOBS": "On-duty members of these jobs get alerts that name no jobs of their own.",
+  "ADMIN_P_JOBS": "police",
+  "ADMIN_F_ALERT_SECONDS": "Alert time",
+  "ADMIN_H_ALERT_SECONDS": "How long an alert's blip and waypoint key stay, unless the alert names its own time.",
+  "ADMIN_F_CARD_SECONDS": "Card time",
+  "ADMIN_H_CARD_SECONDS": "How long the alert card stays on screen.",
+  "ADMIN_F_SOUND": "Sound",
+  "ADMIN_H_SOUND": "A sound plays when a card comes in."
+}

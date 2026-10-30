@@ -1,0 +1,9 @@
+{
+  "$schema": "./schemas/settings.schema.json",
+  "jobs": [
+    "police"
+  ],
+  "alertSeconds": 60,
+  "cardSeconds": 8,
+  "sound": true
+}

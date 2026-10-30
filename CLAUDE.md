@@ -1,0 +1,22 @@
+# ai-policealert
+
+The built-in police alert system: ai-core's dispatch layer hands it every alert (lib `dispatch.alert`) while it is the active alert system (ai-core panel "Police alerts"; `auto` picks an installed third-party alert script first), and on-duty members of the alert's jobs get a card, a blip and a waypoint key. Depends on ai-core (duty, keybinds, notifications, panel). Layer and adapters: `docs/compat/dispatch.md`.
+
+## Decisions
+
+- Its own resource (owner decision), not part of ai-police: a server can swap the alert system without touching police work, and ai-police's shot alerts go through lib `dispatch` like every other script's.
+- Its own panel: default alert jobs (for alerts that name none), alert time (blip and waypoint key), card time, sound.
+- The server keeps live alerts in memory until they expire; nothing is stored. Recipients come from lib `online.onDutyFor(job)` only. On every duty change a player gets a snapshot of the new duty job's live alerts (an empty snapshot clears the cards, sent only to players who hold alerts), then each new alert as a delta; `ttl` / `age` travel with each alert so expiry and the card's clock time run on the client clock.
+- Street and zone are read on the officer's client from the alert's point (the server has no street natives). The waypoint key (`police_alert_waypoint`, default J) acts on the newest live alert.
+- The card copies tgiann-policealert's AlertBox (`docs/design.md`): navy, red code chip, glowing icon, red blink layer (opacity only) for `high`, a time bar that drains with a transform; at most four cards, newest on top.
+
+## Contracts
+
+- Export `DispatchAlert(alert)` (`AiPoliceAlertServerExports`): only ai-core's dispatch layer calls it.
+- Events and the alert wire type with its parser: `resource/common/alerts.ts`; NUI messages: `resource/common/nui.ts` (`texts` once, then `add` / `remove` / `clear`).
+
+## Entry points
+
+- Server: `resource/server/alerts.ts` (`AlertBoard`); panel `server/schema.ts`.
+- Client: cards, blips, sound and the waypoint key `resource/client/alerts.ts`.
+- NUI: `web/src/App.tsx` + `Card.tsx`; `bun run webdev` shows three mock alerts (`web/src/dev/mock.ts`).
