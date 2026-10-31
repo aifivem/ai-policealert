@@ -43,6 +43,34 @@ function bool(value, fallback) {
 function record(value) {
 	return typeof value == "object" && value && !Array.isArray(value) ? value : {};
 }
+// ../../../packages/lib/src/shared/access.ts
+const isPublic = (rule) => rule.jobs.length === 0 && rule.gangs.length === 0, BLIP_STYLE_FIELDS = {
+	sprite: {
+		type: "number",
+		min: 0,
+		max: 1e3,
+		integer: !0
+	},
+	color: {
+		type: "number",
+		min: 0,
+		max: 100,
+		integer: !0
+	},
+	scale: {
+		type: "number",
+		min: .3,
+		max: 2
+	}
+};
+function readBlipStyle(value, fallback) {
+	let v = record(value);
+	return {
+		sprite: int(v.sprite, fallback.sprite, 0, 1e3),
+		color: int(v.color, fallback.color, 0, 100),
+		scale: num(v.scale, fallback.scale, .3, 2)
+	};
+}
 // ../../../packages/lib/src/shared/records.ts
 const isObject = (value) => typeof value == "object" && !!value && !Array.isArray(value);
 function readRecords(raw, readOne) {
@@ -252,6 +280,7 @@ function toDispatchAlert(value) {
 const ADMIN = {
 	ace: "ai.admin",
 	openCallback: "ai-core:admin:open",
+	panelDataCallback: "ai-core:admin:panelData",
 	applyCallback: "ai-core:admin:apply",
 	closeEvent: "ai-core:admin:close",
 	showEvent: "ai-core:admin:show",
@@ -402,7 +431,7 @@ function toPatch(value) {
 		default: return null;
 	}
 }
-const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$15 = resourceExport(CORE.resource), ERR = {
+const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(value)), core$16 = resourceExport(CORE.resource), ERR = {
 	type: "ADMIN_ERR_TYPE",
 	range: "ADMIN_ERR_RANGE",
 	length: "ADMIN_ERR_LENGTH",
@@ -416,7 +445,7 @@ const clone = (value) => value === void 0 ? value : JSON.parse(JSON.stringify(va
 		if (cached && Date.now() - cached.at < 2e3) return cached.values.size > 0 ? cached.values : null;
 		let list = [];
 		try {
-			list = core$15.GetLookupValues(source);
+			list = core$16.GetLookupValues(source);
 		} catch {}
 		let values = new Set(Array.isArray(list) ? list.filter((v) => typeof v == "string") : []);
 		return this.lists.set(source, {
@@ -681,7 +710,7 @@ function writeSchema(resource, name, text, log) {
 	(0, node_fs_promises.mkdir)(dir, { recursive: !0 }).then(() => (0, node_fs_promises.writeFile)(`${dir}/${name}.schema.json`, text, "utf8")).catch((error) => log.error(`writing ${resource}/${path} failed`, error));
 }
 // ../../../packages/lib/src/server/admin/panel.ts
-const core$14 = resourceExport(CORE.resource);
+const core$15 = resourceExport(CORE.resource);
 var AdminPanel = class {
 	schema;
 	data = new Map();
@@ -697,10 +726,10 @@ var AdminPanel = class {
 	constructor(schema) {
 		this.schema = schema;
 		for (let [name, spec] of Object.entries(schema.files)) this.load(name, spec);
-		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
+		registerExport("AdminPanelSnapshot", () => this.snapshot()), registerExport("AdminPanelSummary", () => this.summary()), registerExport("AdminPanelApply", (admin, patch) => this.apply(admin, patch)), onClientCallback(ADMIN.worldChangesCallback(this.resource), () => Object.fromEntries(this.worldChanges), { rate: {
 			count: 4,
 			windowMs: 1e4
-		} }), setImmediate(() => core$14.RegisterAdminPanel(this.resource));
+		} }), setImmediate(() => core$15.RegisterAdminPanel(this.resource));
 	}
 	get(file) {
 		return this.data.get(file) ?? {};
@@ -726,6 +755,27 @@ var AdminPanel = class {
 			schema: this.schema,
 			texts: loadLocaleTexts(),
 			data: clone(Object.fromEntries(this.data))
+		};
+	}
+	summary() {
+		let data = {}, index = {};
+		for (let [file, spec] of Object.entries(this.schema.files)) {
+			let content = this.data.get(file);
+			if (spec.kind !== "records") {
+				data[file] = clone(content ?? {});
+				continue;
+			}
+			let labels = {};
+			for (let [key, record] of Object.entries(content ?? {})) labels[key] = labelOf(record, spec.labelPath) ?? key;
+			index[file] = labels;
+		}
+		return {
+			resource: this.resource,
+			schema: this.schema,
+			texts: loadLocaleTexts(),
+			data,
+			loaded: !1,
+			index
 		};
 	}
 	apply(admin, raw) {
@@ -790,7 +840,7 @@ var AdminPanel = class {
 		let spec = this.schema.files[file], data = this.get(file), value = key === void 0 ? data : data[key] ?? null;
 		this.dataFiles.get(file)?.write(data), this.views.changed(file, key, value);
 		for (let handler of this.handlers.get(file) ?? []) handler(key, value);
-		if (core$14.AdminPanelChanged({
+		if (core$15.AdminPanelChanged({
 			resource: this.resource,
 			file,
 			key,
@@ -811,9 +861,18 @@ var AdminPanel = class {
 		this.data.set(name, data), (filled || raw === null || !file.hasSchemaRef()) && file.write(data);
 	}
 };
+function labelOf(record, path) {
+	if (!path) return null;
+	let at = record;
+	for (let part of path.split(".")) {
+		if (typeof at != "object" || !at) return null;
+		at = at[part];
+	}
+	return typeof at == "string" && at !== "" ? at : null;
+}
 resourceExport(CORE.resource);
 // ../../../packages/lib/src/server/online.ts
-const core$12 = resourceExport(CORE.resource);
+const core$13 = resourceExport(CORE.resource);
 function reindex(index, source, before, after) {
 	for (let name of before) {
 		let set = index.get(name);
@@ -841,11 +900,11 @@ var OnlinePlayers = class {
 				gangs: [],
 				gangNames: [],
 				duty: null
-			}), this.setJobs(source, core$12.GetJobs(source) ?? []), this.setGangs(source, core$12.GetGangs(source) ?? []), this.setDuty(source, core$12.GetDutyJob(source));
+			}), this.setJobs(source, core$13.GetJobs(source) ?? []), this.setGangs(source, core$13.GetGangs(source) ?? []), this.setDuty(source, core$13.GetDutyJob(source));
 		};
 		on(CORE.playerLoadedEvent, load), on(CORE.playerUnloadedEvent, (source) => this.drop(source)), on(CORE.jobsChangedEvent, (source, jobs) => this.setJobs(source, jobs)), on(CORE.gangsChangedEvent, (source, gangs) => this.setGangs(source, gangs)), on(CORE.dutyChangedEvent, (source, job) => this.setDuty(source, job));
-		for (let source of core$12.GetLoadedSources()) {
-			let character = core$12.GetCharacter(source);
+		for (let source of core$13.GetLoadedSources()) {
+			let character = core$13.GetCharacter(source);
 			character && load(source, character);
 		}
 	}
@@ -914,6 +973,20 @@ var OnlinePlayers = class {
 		let duty = this.dutyJob(source);
 		return duty !== null && jobs.includes(duty);
 	}
+	allows(source, rule) {
+		if (isPublic(rule)) return !0;
+		let min = (name) => rule.grades[name] ?? 0;
+		for (let gang of rule.gangs) {
+			let grade = this.gangGrade(source, gang);
+			if (grade !== null && grade >= min(gang)) return !0;
+		}
+		let duty = rule.onDuty ? this.dutyJob(source) : null;
+		for (let job of rule.jobs) {
+			let grade = this.jobGrade(source, job);
+			if (grade !== null && grade >= min(job) && (!rule.onDuty || duty === job)) return !0;
+		}
+		return !1;
+	}
 	countOnDuty(jobs) {
 		this.start();
 		let count = 0;
@@ -949,6 +1022,25 @@ on(CORE.playerUnloadedEvent, (source) => {
 	let settle = running.get(source);
 	settle && settle(!1);
 });
+// ../../../packages/lib/src/server/definitions.ts
+const core$10 = resourceExport("ai-core");
+new class {
+	jobs = new Map();
+	gangs = new Map();
+	constructor() {
+		on(CORE.definitionsChangedEvent, (file, name) => {
+			typeof name == "string" && (file === "jobs" ? this.jobs.delete(name) : file === "gangs" && this.gangs.delete(name));
+		});
+	}
+	job(name) {
+		let def = this.jobs.get(name);
+		return def === void 0 && this.jobs.set(name, def = core$10.GetJobDefinition(name) ?? null), def;
+	}
+	gang(name) {
+		let def = this.gangs.get(name);
+		return def === void 0 && this.gangs.set(name, def = core$10.GetGangDefinition(name) ?? null), def;
+	}
+}();
 // ../../../packages/lib/src/server/command.ts
 const resource = GetCurrentResourceName();
 createLogger(resource), new class {
@@ -1068,6 +1160,10 @@ new class {
 const EVENTS = {
 	alerts: "ai-policealert:client:alerts",
 	alert: "ai-policealert:client:alert"
+}, ALERT_BLIP = {
+	sprite: 60,
+	color: 1,
+	scale: .8
 }, names = (v) => Array.isArray(v) ? v.filter((x) => typeof x == "string") : [];
 function readSettings(raw) {
 	let s = record(raw);
@@ -1076,15 +1172,10 @@ function readSettings(raw) {
 		alertSeconds: int(s.alertSeconds, 60, 10, 600),
 		cardSeconds: int(s.cardSeconds, 8, 2, 60),
 		sound: bool(s.sound, !0),
-		maxAlerts: int(s.maxAlerts, 30, 5, 100)
+		maxAlerts: int(s.maxAlerts, 30, 5, 100),
+		blip: readBlipStyle(s.blip, ALERT_BLIP)
 	};
 }
-// resource/server/alerts.ts
-const BLIP = {
-	sprite: 161,
-	color: 1,
-	scale: 1.2
-};
 var AlertBoard = class {
 	settings;
 	live = new Map();
@@ -1131,7 +1222,7 @@ var AlertBoard = class {
 		for (let [id, live] of this.live) live.expires <= now && this.live.delete(id);
 	}
 	wire(live, now) {
-		let a = live.alert;
+		let a = live.alert, blip = this.settings().blip;
 		return {
 			id: live.id,
 			code: a.code ?? null,
@@ -1139,9 +1230,9 @@ var AlertBoard = class {
 			message: a.message ?? null,
 			coords: a.coords ?? null,
 			blip: {
-				sprite: a.blip?.sprite ?? BLIP.sprite,
-				color: a.blip?.color ?? BLIP.color,
-				scale: a.blip?.scale ?? BLIP.scale
+				sprite: a.blip?.sprite ?? blip.sprite,
+				color: a.blip?.color ?? blip.color,
+				scale: a.blip?.scale ?? blip.scale
 			},
 			icon: a.icon ?? "triangle-exclamation",
 			high: a.priority === "high",
@@ -1189,7 +1280,11 @@ const settings = new AdminPanel({
 				max: 100,
 				integer: !0
 			},
-			sound: { type: "bool" }
+			sound: { type: "bool" },
+			blip: {
+				type: "object",
+				fields: BLIP_STYLE_FIELDS
+			}
 		}
 	} },
 	tabs: [{
@@ -1242,6 +1337,12 @@ const settings = new AdminPanel({
 					path: "sound",
 					label: "ADMIN_F_SOUND",
 					hint: "ADMIN_H_SOUND"
+				},
+				{
+					widget: "blip",
+					path: "blip",
+					label: "ADMIN_F_BLIP",
+					hint: "ADMIN_H_BLIP"
 				}
 			]
 		}]

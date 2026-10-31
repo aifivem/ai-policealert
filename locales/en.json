@@ -18,5 +18,7 @@
   "ADMIN_F_MAX_ALERTS": "Live alerts per officer",
   "ADMIN_H_MAX_ALERTS": "Most alerts an officer keeps on the map at once; a new one replaces the oldest.",
   "ADMIN_F_SOUND": "Sound",
-  "ADMIN_H_SOUND": "A sound plays when a card comes in."
+  "ADMIN_H_SOUND": "A sound plays when a card comes in.",
+  "ADMIN_F_BLIP": "Alert blip",
+  "ADMIN_H_BLIP": "Map blip of an alert whose script sets no blip of its own. High priority alerts flash."
 }

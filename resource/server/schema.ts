@@ -1,3 +1,4 @@
+import { BLIP_STYLE_FIELDS } from "@aicore-fivem/lib/shared";
 import type { PanelSchema } from "@aicore-fivem/shared";
 
 /** ai-policealert's panel: which jobs get alerts by default, alert and card time, sound. */
@@ -20,6 +21,7 @@ export const alertSchema: PanelSchema = {
         cardSeconds: { type: "number", min: 2, max: 60, integer: true },
         maxAlerts: { type: "number", min: 5, max: 100, integer: true },
         sound: { type: "bool" },
+        blip: { type: "object", fields: BLIP_STYLE_FIELDS },
       },
     },
   },
@@ -75,6 +77,12 @@ export const alertSchema: PanelSchema = {
               path: "sound",
               label: "ADMIN_F_SOUND",
               hint: "ADMIN_H_SOUND",
+            },
+            {
+              widget: "blip",
+              path: "blip",
+              label: "ADMIN_F_BLIP",
+              hint: "ADMIN_H_BLIP",
             },
           ],
         },

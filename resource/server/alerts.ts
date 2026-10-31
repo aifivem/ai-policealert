@@ -4,10 +4,8 @@ import {
   toDispatchAlert,
   type DispatchAlert,
 } from "@aicore-fivem/shared";
-import { EVENTS, type PoliceAlert } from "common/alerts";
+import { EVENTS, type PoliceAlert, type Settings } from "common/alerts";
 
-/** Default blip of an alert that names none: a red pulse. */
-const BLIP = { sprite: 161, color: 1, scale: 1.2 };
 /** Live alerts the board keeps at most over every job (the oldest goes first); officers get at most `maxAlerts`. */
 const BOARD_MAX = 1000;
 
@@ -33,11 +31,10 @@ export class AlertBoard {
   private nextId = 0;
 
   constructor(
-    private readonly settings: () => {
-      jobs: string[];
-      alertSeconds: number;
-      maxAlerts: number;
-    },
+    private readonly settings: () => Pick<
+      Settings,
+      "jobs" | "alertSeconds" | "maxAlerts" | "blip"
+    >,
   ) {}
 
   add(alert: DispatchAlert): void {
@@ -102,6 +99,7 @@ export class AlertBoard {
 
   private wire(live: LiveAlert, now: number): PoliceAlert {
     const a = live.alert;
+    const blip = this.settings().blip;
     return {
       id: live.id,
       code: a.code ?? null,
@@ -109,9 +107,9 @@ export class AlertBoard {
       message: a.message ?? null,
       coords: a.coords ?? null,
       blip: {
-        sprite: a.blip?.sprite ?? BLIP.sprite,
-        color: a.blip?.color ?? BLIP.color,
-        scale: a.blip?.scale ?? BLIP.scale,
+        sprite: a.blip?.sprite ?? blip.sprite,
+        color: a.blip?.color ?? blip.color,
+        scale: a.blip?.scale ?? blip.scale,
       },
       icon: a.icon ?? "triangle-exclamation",
       high: a.priority === "high",

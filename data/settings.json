@@ -6,5 +6,10 @@
   "alertSeconds": 60,
   "cardSeconds": 8,
   "maxAlerts": 30,
-  "sound": true
+  "sound": true,
+  "blip": {
+    "sprite": 60,
+    "color": 1,
+    "scale": 0.8
+  }
 }

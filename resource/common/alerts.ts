@@ -7,6 +7,7 @@ import {
   readText,
   record,
   str,
+  type BlipStyle,
 } from "@aicore-fivem/lib/shared";
 
 /** ai-policealert's contracts and panel content. No natives. */
@@ -50,13 +51,16 @@ export function toPoliceAlert(value: unknown): PoliceAlert | null {
     title,
     message: readText(v.message, 160),
     coords: x !== null && y !== null && z !== null ? { x, y, z } : null,
-    blip: readBlipStyle(b, { sprite: 161, color: 1, scale: 1 }),
+    blip: readBlipStyle(b, ALERT_BLIP),
     icon: str(v.icon, "triangle-exclamation", 40),
     high: v.high === true,
     age: Math.max(0, num(v.age, 0)),
     ttl: Math.max(0, ttl),
   };
 }
+
+/** The blip of an alert that names none: qb-policejob's alert blip (red, sprite 60, 0.8). */
+export const ALERT_BLIP: BlipStyle = { sprite: 60, color: 1, scale: 0.8 };
 
 export interface Settings {
   /** Jobs whose on-duty members get an alert that names no jobs. */
@@ -69,6 +73,8 @@ export interface Settings {
   sound: boolean;
   /** Most live alerts an officer holds (snapshot and client feed keep the newest). */
   maxAlerts: number;
+  /** Blip of an alert that names none. */
+  blip: BlipStyle;
 }
 
 const names = (v: unknown): string[] =>
@@ -82,5 +88,6 @@ export function readSettings(raw: unknown): Settings {
     cardSeconds: int(s.cardSeconds, 8, 2, 60),
     sound: bool(s.sound, true),
     maxAlerts: int(s.maxAlerts, 30, 5, 100),
+    blip: readBlipStyle(s.blip, ALERT_BLIP),
   };
 }
