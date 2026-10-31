@@ -243,6 +243,8 @@ const CORE = {
 	vehicleTypeCallback: "ai-core:vehicleType",
 	interactionStateKey: "ai:interaction",
 	pvpStateKey: "ai:pvp",
+	medicalStateKey: "ai:medical",
+	clientDeadEvent: "ai-core:client:dead",
 	charactersCallback: "ai-core:characters",
 	createCharacterCallback: "ai-core:createCharacter",
 	deleteCharacterCallback: "ai-core:deleteCharacter",
@@ -948,6 +950,9 @@ var OnlinePlayers = class {
 	character(source) {
 		return this.start(), this.players.get(source)?.character ?? null;
 	}
+	charId(source) {
+		return this.start(), this.players.get(source)?.character.id;
+	}
 	name(source, options = {}) {
 		let c = this.character(source);
 		return c ? `${c.firstname} ${c.lastname}` : options.fallback === !1 ? "" : GetPlayerName(String(source));
@@ -1002,8 +1007,9 @@ var OnlinePlayers = class {
 	}
 };
 const EMPTY = new Set(), online = new OnlinePlayers();
-resourceExport(CORE.resource), resourceExport(CORE.resource), createLogger(GetCurrentResourceName());
-const dropped = new Set();
+resourceExport(CORE.resource), resourceExport(CORE.resource);
+// ../../../packages/lib/src/server/players.ts
+const log$3 = createLogger(GetCurrentResourceName()), dropped = new Set();
 let listening = !1;
 function onDropped(fn) {
 	listening || (listening = !0, on("playerDropped", () => {
@@ -1020,6 +1026,35 @@ var PlayerMap = class extends Map {
 		});
 	}
 };
+function onCharacter(handlers) {
+	let live = new Map(), deliver = (source, character) => {
+		if (live.set(source, character.id), handlers.loaded) try {
+			let result = handlers.loaded(source, character);
+			result instanceof Promise && result.catch((error) => log$3.error(`character loaded handler failed for ${source}`, error));
+		} catch (error) {
+			log$3.error(`character loaded handler failed for ${source}`, error);
+		}
+	}, end = (source, charId, reason) => {
+		if (live.delete(source)) try {
+			handlers.unloaded?.(source, charId, reason);
+		} catch (error) {
+			log$3.error(`character unloaded handler failed for ${source}`, error);
+		}
+	};
+	on(CORE.playerLoadedEvent, (source, character) => {
+		let previous = live.get(source);
+		previous !== void 0 && end(source, previous, "switch"), deliver(source, character);
+	}), on(CORE.playerUnloadedEvent, (source, charId, reason) => end(source, charId, reason === "dropped" ? "dropped" : "switch")), onDropped((source) => setImmediate(() => {
+		let charId = live.get(source);
+		charId !== void 0 && end(source, charId, "dropped");
+	})), setImmediate(() => {
+		for (let source of online.sources()) {
+			if (live.has(source)) continue;
+			let character = online.character(source);
+			character && deliver(source, character);
+		}
+	});
+}
 // ../../../packages/lib/src/server/progressFor.ts
 const running = new PlayerMap({ onDrop: (_source, settle) => settle(!1) });
 on(CORE.playerUnloadedEvent, (source) => {
@@ -1249,7 +1284,7 @@ function startAlerts(board) {
 	registerExport("DispatchAlert", (raw) => {
 		let alert = toDispatchAlert(raw);
 		alert && board.add(alert);
-	}), on(CORE.dutyChangedEvent, (source, job) => board.dutyChanged(source, job)), on(CORE.playerUnloadedEvent, (source, _charId, reason) => reason === "switch" ? board.dutyChanged(source, null) : board.drop(source));
+	}), on(CORE.dutyChangedEvent, (source, job) => board.dutyChanged(source, job)), onCharacter({ unloaded: (source, _charId, reason) => reason === "switch" ? board.dutyChanged(source, null) : board.drop(source) });
 }
 // resource/server/index.ts
 const settings = new AdminPanel({

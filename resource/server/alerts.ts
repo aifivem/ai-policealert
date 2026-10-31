@@ -1,4 +1,9 @@
-import { online, PlayerMap, registerExport } from "@aicore-fivem/lib/server";
+import {
+  onCharacter,
+  online,
+  PlayerMap,
+  registerExport,
+} from "@aicore-fivem/lib/server";
 import {
   CORE,
   toDispatchAlert,
@@ -128,11 +133,10 @@ export function startAlerts(board: AlertBoard): void {
   on(CORE.dutyChangedEvent, (source: number, job: string | null) =>
     board.dutyChanged(source, job),
   );
-  on(
-    CORE.playerUnloadedEvent,
-    (source: number, _charId: unknown, reason: unknown) =>
+  onCharacter({
+    unloaded: (source, _charId, reason) =>
       reason === "switch"
         ? board.dutyChanged(source, null)
         : board.drop(source),
-  );
+  });
 }
