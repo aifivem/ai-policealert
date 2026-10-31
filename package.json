@@ -7,7 +7,7 @@
   "author": {
     "name": "TGIANN"
   },
-  "repository": "github:TGIANN/ai-policealert",
+  "repository": "github:aifivem/ai-policealert",
   "type": "module",
   "fxDependencies": [
     "/onesync",
