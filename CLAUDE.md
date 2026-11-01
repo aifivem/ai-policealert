@@ -18,6 +18,6 @@ The built-in police alert system: ai-core's dispatch layer hands it every alert 
 
 ## Entry points
 
-- Server: `resource/server/alerts.ts` (`AlertBoard`); panel `server/schema.ts`.
-- Client: cards, blips, sound and the waypoint key `resource/client/alerts.ts`.
+- Server: `resource/server/alerts/` (`board.ts` the `AlertBoard`, `index.ts` its export and listeners); panel `server/schema.ts`.
+- Client: `resource/client/alerts/` (cards, blips and sound `feed.ts`; events and the waypoint key `index.ts`).
 - NUI: `web/src/App.tsx` + `Card.tsx`; `bun run webdev` shows three mock alerts (`web/src/dev/mock.ts`).

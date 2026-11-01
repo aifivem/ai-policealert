@@ -1,18 +1,11 @@
 import {
   createBlip,
-  Keybind,
   loadLocaleTexts,
   locationName,
   notify,
-  onServerEvent,
 } from "@aicore-fivem/lib/client";
 import { Locale } from "common";
-import {
-  EVENTS,
-  toPoliceAlert,
-  type PoliceAlert,
-  type Settings,
-} from "common/alerts";
+import type { PoliceAlert, Settings } from "common/alerts";
 import type { AlertCard, NuiMessage } from "common/nui";
 
 const send = (m: NuiMessage): void => SendNUIMessage(m);
@@ -40,7 +33,7 @@ function placeOf(c: { x: number; y: number; z: number }): {
  * The officer's live alerts: a card on the NUI, a blip and the waypoint key, each removed when the alert's time ends
  * on this client's clock. Fed by the server's snapshot (duty change) and deltas (new alerts).
  */
-class AlertFeed {
+export class AlertFeed {
   private readonly shown = new Map<number, Shown>();
   /** The newest live alert: the waypoint key acts on it. */
   private newest: Shown | null = null;
@@ -147,39 +140,4 @@ class AlertFeed {
     this.textsSent = true;
     send({ action: "texts", data: loadLocaleTexts() });
   }
-}
-
-/** Starts the alert cards; `settings` reads the panel's settings. */
-export function startAlerts(settings: () => Settings): void {
-  const key = new Keybind({
-    name: "police_alert_waypoint",
-    description: Locale("KEYBIND_WAYPOINT"),
-    defaultKey: "J",
-    onPressed: () => feed.waypoint(),
-  });
-  const feed = new AlertFeed(settings, () => key.currentKey);
-  onServerEvent(
-    EVENTS.alerts,
-    {
-      args: ([list]) =>
-        Array.isArray(list)
-          ? [
-              list
-                .map(toPoliceAlert)
-                .filter((a): a is PoliceAlert => a !== null),
-            ]
-          : null,
-    },
-    (list) => feed.set(list),
-  );
-  onServerEvent(
-    EVENTS.alert,
-    {
-      args: ([raw]) => {
-        const alert = toPoliceAlert(raw);
-        return alert ? [alert] : null;
-      },
-    },
-    (alert) => feed.add(alert),
-  );
 }

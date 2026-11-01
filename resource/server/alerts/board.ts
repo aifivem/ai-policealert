@@ -1,14 +1,5 @@
-import {
-  onCharacter,
-  online,
-  PlayerMap,
-  registerExport,
-} from "@aicore-fivem/lib/server";
-import {
-  CORE,
-  toDispatchAlert,
-  type DispatchAlert,
-} from "@aicore-fivem/shared";
+import { online, PlayerMap } from "@aicore-fivem/lib/server";
+import type { DispatchAlert } from "@aicore-fivem/shared";
 import { EVENTS, type PoliceAlert, type Settings } from "common/alerts";
 
 /** Live alerts the board keeps at most over every job (the oldest goes first); officers get at most `maxAlerts`. */
@@ -122,21 +113,4 @@ export class AlertBoard {
       ttl: live.expires - now,
     };
   }
-}
-
-/** Registers the board's export (ai-core's dispatch layer calls it) and the duty / leave listeners. */
-export function startAlerts(board: AlertBoard): void {
-  registerExport("DispatchAlert", (raw: unknown) => {
-    const alert = toDispatchAlert(raw);
-    if (alert) board.add(alert);
-  });
-  on(CORE.dutyChangedEvent, (source: number, job: string | null) =>
-    board.dutyChanged(source, job),
-  );
-  onCharacter({
-    unloaded: (source, _charId, reason) =>
-      reason === "switch"
-        ? board.dutyChanged(source, null)
-        : board.drop(source),
-  });
 }
