@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.5](https://github.com/aifivem/ai-policealert/compare/v0.1.4...v0.1.5) (2026-11-02)
+
+
+### Documentation
+
+* install from the release zip ([e59865c](https://github.com/aifivem/ai-policealert/commit/e59865cb42abef4cbc1af0011f15d0020a5cd608))
+
+
+### Miscellaneous Chores
+
+* build files are no longer in git, the release zip carries them ([481987d](https://github.com/aifivem/ai-policealert/commit/481987d6ca0f10db20059fad993e6378fa691847))
+
 ## [0.1.4](https://github.com/aifivem/ai-policealert/compare/v0.1.3...v0.1.4) (2026-11-02)
 
 
