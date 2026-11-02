@@ -2,8 +2,8 @@ import {
   AdminPanel,
   onCharacter,
   registerExport,
-} from "@aicore-fivem/lib/server";
-import { CORE, toDispatchAlert } from "@aicore-fivem/shared";
+} from "@aifivem/lib/server";
+import { CORE, toDispatchAlert } from "@aifivem/shared";
 import { readSettings } from "common/alerts";
 import { alertSchema } from "../schema";
 import { AlertBoard } from "./board";

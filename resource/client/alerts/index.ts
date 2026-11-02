@@ -1,5 +1,5 @@
-import { AdminWorld, Keybind, onServerEvent } from "@aicore-fivem/lib/client";
-import { NUI_LAYER } from "@aicore-fivem/shared";
+import { AdminWorld, Keybind, onServerEvent } from "@aifivem/lib/client";
+import { NUI_LAYER } from "@aifivem/shared";
 import { Locale } from "common";
 import {
   EVENTS,

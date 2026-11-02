@@ -1,5 +1,5 @@
-import { BLIP_STYLE_FIELDS } from "@aicore-fivem/lib/shared";
-import type { PanelSchema } from "@aicore-fivem/shared";
+import { BLIP_STYLE_FIELDS } from "@aifivem/lib/shared";
+import type { PanelSchema } from "@aifivem/shared";
 
 /** ai-policealert's panel: which jobs get alerts by default, alert and card time, sound. */
 export const alertSchema: PanelSchema = {

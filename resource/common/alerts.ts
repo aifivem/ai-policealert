@@ -8,7 +8,7 @@ import {
   record,
   str,
   type BlipStyle,
-} from "@aicore-fivem/lib/shared";
+} from "@aifivem/lib/shared";
 
 /** ai-policealert's contracts and panel content. No natives. */
 
