@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4](https://github.com/aifivem/ai-policealert/compare/v0.1.3...v0.1.4) (2026-11-02)
+
+
+### Bug Fixes
+
+* **build:** keep the web build in dist/ so release zips have the NUI ([6200b9e](https://github.com/aifivem/ai-policealert/commit/6200b9e263a5b295e02eee52f85139596740734f))
+
+
+### Code Refactoring
+
+* import the shared packages from [@aifivem](https://github.com/aifivem) ([2590768](https://github.com/aifivem/ai-policealert/commit/2590768d5dbf8b0b92e0fce7e1247d7822eca396))
+
 ## [0.1.3](https://github.com/aifivem/ai-policealert/compare/v0.1.2...v0.1.3) (2026-11-01)
 
 
